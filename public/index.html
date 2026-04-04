@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0f0f0f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Layered</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+  <!-- ========== HERO ========== -->
+  <section id="hero">
+    <div class="hero-content">
+      <h1 class="hero-title">LAYERED</h1>
+      <p class="hero-tagline">dress like you know what you're doing</p>
+      <button class="hero-cta" onclick="scrollToApp()">
+        <span>let's go</span>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M8 3v10M3 8l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="hero-scroll-hint" aria-hidden="true">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M12 5v14M5 12l7 7 7-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ========== APP ========== -->
+  <main id="app">
+
+    <!-- User Selection -->
+    <section id="user-select-section">
+      <div class="section-intro">
+        <p class="section-label">who's checking in?</p>
+      </div>
+      <div class="user-cards">
+        <button class="user-card" onclick="selectUser('Parker')" aria-label="Select Parker">
+          <span class="user-initial">P</span>
+          <span class="user-name">Parker</span>
+        </button>
+        <button class="user-card" onclick="selectUser('Ali')" aria-label="Select Ali">
+          <span class="user-initial">A</span>
+          <span class="user-name">Ali</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Dashboard -->
+    <section id="dashboard" hidden>
+
+      <!-- Home View -->
+      <div id="home-view">
+        <div class="user-bar">
+          <div>
+            <p class="user-bar-greeting">hey, <span id="greeting-name" class="user-bar-name"></span></p>
+            <p class="user-bar-sub" id="user-stats-line">loading your history...</p>
+          </div>
+          <button class="switch-btn" onclick="switchUser()">not you?</button>
+        </div>
+
+        <div class="action-cards">
+          <button class="action-card action-submit" onclick="startSubmission()">
+            <div class="action-icon">📸</div>
+            <div class="action-text">
+              <span class="action-title">Was this a mistake?</span>
+              <span class="action-desc">Log today's outfit for science</span>
+            </div>
+          </button>
+          <button class="action-card action-recommend" onclick="startRecommendation()">
+            <div class="action-icon">🧠</div>
+            <div class="action-text">
+              <span class="action-title">Please just dress me</span>
+              <span class="action-desc">Get a recommendation from your history</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- ===== SUBMISSION VIEW ===== -->
+      <div id="submission-view" hidden>
+
+        <!-- Sticky photo banner (shown after photo selected) -->
+        <div id="photo-banner" class="photo-banner" hidden>
+          <img id="photo-banner-img" src="" alt="Your outfit photo">
+          <div class="photo-banner-label">
+            <span class="banner-tag">today's fit</span>
+          </div>
+        </div>
+
+        <div class="view-header">
+          <button class="back-btn" onclick="goHome()">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+              <path d="M11 4L6 9l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            back
+          </button>
+          <h2 class="view-title">Log an Outfit</h2>
+        </div>
+
+        <!-- Step: Photo -->
+        <div class="step" id="step-photo">
+          <div class="step-header">
+            <span class="step-num">01</span>
+            <h3 class="step-title">The fit.</h3>
+            <p class="step-sub">show us what you walked out the door in</p>
+          </div>
+          <div class="upload-zone" id="upload-zone" onclick="triggerFileInput()" role="button" tabindex="0">
+            <svg class="upload-icon" width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+              <rect x="4" y="4" width="32" height="32" rx="8" stroke="currentColor" stroke-width="1.5"/>
+              <circle cx="20" cy="20" r="5" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M20 12v2M20 26v2M12 20h2M26 20h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <p class="upload-label">tap to upload a photo</p>
+            <p class="upload-sub">from your camera roll</p>
+          </div>
+          <input type="file" id="file-input" accept="image/*" hidden aria-label="Upload outfit photo">
+        </div>
+
+        <!-- Step: Weather -->
+        <div class="step" id="step-weather" hidden>
+          <div class="step-header">
+            <span class="step-num">02</span>
+            <h3 class="step-title">The conditions.</h3>
+            <p class="step-sub">what was it actually like out there</p>
+          </div>
+          <div id="weather-loading" class="loading-block">
+            <div class="spinner"></div>
+            <p>checking the skies...</p>
+          </div>
+          <div id="weather-display" hidden>
+            <div class="weather-card">
+              <div class="weather-row">
+                <span class="weather-temp" id="weather-temp-display">—</span>
+                <span class="weather-condition" id="weather-condition-display">—</span>
+              </div>
+              <p class="weather-location" id="weather-location-display">—</p>
+            </div>
+            <p class="adj-label">feel off? nudge it.</p>
+            <div class="temp-adjuster">
+              <button class="adj-btn" id="temp-minus" aria-label="Decrease temperature">−</button>
+              <span class="adj-value" id="adj-temp-display">—</span>
+              <button class="adj-btn" id="temp-plus" aria-label="Increase temperature">+</button>
+            </div>
+            <button class="confirm-btn" id="confirm-weather-btn">that's right →</button>
+          </div>
+        </div>
+
+        <!-- Step: Rating -->
+        <div class="step" id="step-rating" hidden>
+          <div class="step-header">
+            <span class="step-num">03</span>
+            <h3 class="step-title">How'd it go out there?</h3>
+            <p class="step-sub">temperature comfort, not vibes</p>
+          </div>
+          <div class="rating-list" id="rating-list">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+
+        <!-- Step: Activity -->
+        <div class="step" id="step-activity" hidden>
+          <div class="step-header">
+            <span class="step-num">04</span>
+            <h3 class="step-title">What were you doing?</h3>
+            <p class="step-sub">this helps match future recommendations</p>
+          </div>
+          <div class="activity-chips" id="activity-chips">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+
+        <!-- Step: Description -->
+        <div class="step" id="step-desc" hidden>
+          <div class="step-header">
+            <span class="step-num">05</span>
+            <h3 class="step-title">What did you wear?</h3>
+            <p class="step-sub">your words — we'll borrow them later</p>
+          </div>
+          <textarea
+            id="outfit-desc"
+            class="outfit-textarea"
+            placeholder="t-shirt, hoodie, light jacket, jeans… and the shoes you're lying to yourself about"
+            rows="4"
+          ></textarea>
+          <button class="confirm-btn" id="confirm-desc-btn">looks right →</button>
+        </div>
+
+        <!-- Step: Submit -->
+        <div class="step" id="step-submit" hidden>
+          <div class="step-header">
+            <span class="step-num">06</span>
+            <h3 class="step-title">Ready to commit?</h3>
+          </div>
+          <div class="submit-summary" id="submit-summary">
+            <!-- Injected by JS -->
+          </div>
+          <button class="submit-btn" id="submit-btn">
+            <span id="submit-btn-text">log this fit</span>
+          </button>
+        </div>
+
+        <!-- Success -->
+        <div class="step success-step" id="step-success" hidden>
+          <div class="success-content">
+            <div class="success-check">✓</div>
+            <p class="success-message" id="success-message">Filed.</p>
+            <button class="confirm-btn" style="margin-top: 32px;" onclick="goHome()">back home</button>
+          </div>
+        </div>
+
+      </div>
+      <!-- /submission-view -->
+
+      <!-- ===== RECOMMENDATION VIEW ===== -->
+      <div id="recommendation-view" hidden>
+
+        <div class="view-header">
+          <button class="back-btn" onclick="goHome()">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+              <path d="M11 4L6 9l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            back
+          </button>
+          <h2 class="view-title">What to Wear</h2>
+        </div>
+
+        <!-- Step 1: Weather confirm -->
+        <div id="rec-weather-step">
+          <div id="rec-weather-loading" class="loading-block">
+            <div class="spinner"></div>
+            <p>reading the atmosphere...</p>
+          </div>
+          <div id="rec-weather-display" hidden>
+            <div class="weather-card">
+              <div class="weather-row">
+                <span class="weather-temp" id="rec-temp-display">—</span>
+                <span class="weather-condition" id="rec-condition-display">—</span>
+              </div>
+              <p class="weather-location" id="rec-location-display">—</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Activity selection (for recommendation) -->
+        <div id="rec-activity-step" hidden>
+          <div class="step-header" style="margin-top: 32px;">
+            <h3 class="step-title">What are you doing today?</h3>
+            <p class="step-sub">optional — helps find a better match</p>
+          </div>
+          <div class="activity-chips" id="rec-activity-chips">
+            <!-- Injected by JS -->
+          </div>
+          <button class="confirm-btn" id="get-rec-btn" style="margin-top: 24px;">find my outfit →</button>
+        </div>
+
+        <!-- Generating -->
+        <div id="rec-generating" class="loading-block" hidden>
+          <div class="spinner"></div>
+          <p>consulting your history...</p>
+        </div>
+
+        <!-- Result -->
+        <div id="rec-result" hidden>
+
+          <!-- Cold start -->
+          <div id="rec-cold-start" hidden>
+            <div class="cold-start-card">
+              <p class="cold-start-icon">🗓</p>
+              <p class="cold-start-msg" id="cold-start-msg"></p>
+              <div class="progress-bar-wrap">
+                <div class="progress-bar-track">
+                  <div class="progress-bar-fill" id="progress-bar-fill"></div>
+                </div>
+                <p class="progress-label" id="progress-label"></p>
+              </div>
+              <button class="action-card-sm" onclick="startSubmission()">log an outfit →</button>
+            </div>
+          </div>
+
+          <!-- Recommendation card -->
+          <div id="rec-card" hidden>
+            <div class="rec-photo-wrap">
+              <img id="rec-photo-img" src="" alt="Reference outfit">
+              <div class="confidence-badge" id="confidence-badge">
+                <span class="conf-pct" id="conf-pct-text">—%</span>
+                <span class="conf-label" id="conf-label-text">—</span>
+              </div>
+            </div>
+            <div class="rec-meta-row">
+              <span class="rec-meta-date" id="rec-meta-date"></span>
+              <span class="rec-meta-sep">·</span>
+              <span class="rec-meta-temp" id="rec-meta-temp"></span>
+              <span class="rec-meta-activity" id="rec-meta-activity"></span>
+            </div>
+            <div class="rec-activity-note" id="rec-activity-note" hidden>
+              <p id="rec-activity-note-text"></p>
+            </div>
+            <div class="rec-text-card">
+              <p class="rec-text" id="rec-text"></p>
+            </div>
+            <button class="confirm-btn" onclick="goHome()" style="margin-top: 24px;">back home</button>
+          </div>
+
+        </div>
+        <!-- /rec-result -->
+
+      </div>
+      <!-- /recommendation-view -->
+
+    </section>
+    <!-- /dashboard -->
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
