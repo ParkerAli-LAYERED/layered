@@ -42,12 +42,26 @@
         <p class="section-label">who's checking in?</p>
       </div>
       <div class="user-cards">
-        <button class="user-card" onclick="selectUser('Parker')" aria-label="Select Parker">
-          <span class="user-initial">P</span>
+        <button class="user-card" data-user="Parker" onclick="selectUser('Parker')" aria-label="Select Parker">
+          <div class="user-initial-wrap">
+            <span class="user-initial">P</span>
+            <span class="user-check" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path d="M4 9l4 4 6-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </div>
           <span class="user-name">Parker</span>
         </button>
-        <button class="user-card" onclick="selectUser('Ali')" aria-label="Select Ali">
-          <span class="user-initial">A</span>
+        <button class="user-card" data-user="Ali" onclick="selectUser('Ali')" aria-label="Select Ali">
+          <div class="user-initial-wrap">
+            <span class="user-initial">A</span>
+            <span class="user-check" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path d="M4 9l4 4 6-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </div>
           <span class="user-name">Ali</span>
         </button>
       </div>
@@ -136,17 +150,18 @@
             <p>checking the skies...</p>
           </div>
           <div id="weather-display" hidden>
-            <div class="weather-card">
-              <div class="weather-row">
-                <span class="weather-temp" id="weather-temp-display">—</span>
-                <span class="weather-condition" id="weather-condition-display">—</span>
+            <div class="weather-card-v2">
+              <p class="weather-location-line" id="weather-location-display"></p>
+              <div class="weather-pills-row">
+                <span class="weather-pill weather-pill-temp" id="weather-temp-display"></span>
+                <span class="weather-pill weather-pill-feels" id="weather-feels-display"></span>
+                <span class="weather-pill weather-pill-cond" id="weather-condition-display"></span>
               </div>
-              <p class="weather-location" id="weather-location-display">—</p>
             </div>
-            <p class="adj-label">feel off? nudge it.</p>
+            <p class="adj-label">feel off? nudge the temperature.</p>
             <div class="temp-adjuster">
               <button class="adj-btn" id="temp-minus" aria-label="Decrease temperature">−</button>
-              <span class="adj-value" id="adj-temp-display">—</span>
+              <span class="adj-value" id="adj-temp-display"></span>
               <button class="adj-btn" id="temp-plus" aria-label="Increase temperature">+</button>
             </div>
             <button class="confirm-btn" id="confirm-weather-btn">that's right →</button>
@@ -239,12 +254,14 @@
             <p>reading the atmosphere...</p>
           </div>
           <div id="rec-weather-display" hidden>
-            <div class="weather-card">
-              <div class="weather-row">
-                <span class="weather-temp" id="rec-temp-display">—</span>
-                <span class="weather-condition" id="rec-condition-display">—</span>
+            <div class="rec-conditions-card">
+              <p class="rec-conditions-eyebrow">how's it going out there?</p>
+              <p class="rec-conditions-summary" id="rec-conditions-summary"></p>
+              <div class="weather-pills-row" style="margin-top: 12px;">
+                <span class="weather-pill weather-pill-temp" id="rec-temp-display"></span>
+                <span class="weather-pill weather-pill-feels" id="rec-feels-display"></span>
+                <span class="weather-pill weather-pill-cond" id="rec-condition-display"></span>
               </div>
-              <p class="weather-location" id="rec-location-display">—</p>
             </div>
           </div>
         </div>

@@ -13,13 +13,11 @@ const DEFAULT_LON = -73.9814;
 const MIN_SUBMISSIONS_FOR_REC = 4;
 
 const RATINGS = [
-  { label: "Genuinely froze. SOS.", numeric: -3 },
-  { label: "Too cold. Rookie move.", numeric: -2 },
-  { label: "A smidge chilly.", numeric: -1 },
-  { label: "Nailed it. Actual perfection.", numeric: 0 },
-  { label: "Running a touch warm.", numeric: 1 },
-  { label: "Sweaty, but make it fashion.", numeric: 2 },
-  { label: "A walking, breathing furnace.", numeric: 3 }
+  { label: "Dangerously underdressed.",   numeric: -2 },
+  { label: "Could've used one more layer.", numeric: -1 },
+  { label: "Absolutely nailed it.",        numeric:  0 },
+  { label: "Running a little hot.",        numeric:  1 },
+  { label: "A wool coat in July situation.", numeric: 2 }
 ];
 
 const ACTIVITIES = [
@@ -84,10 +82,24 @@ document.addEventListener('DOMContentLoaded', () => {
 // =============================================
 
 function selectUser(name) {
-  state.user = name;
-  localStorage.setItem('layered_user', name);
-  showDashboard();
-  loadUserStats();
+  // Animate the card before transitioning
+  const cards = document.querySelectorAll('.user-card');
+  cards.forEach(card => {
+    const isSelected = card.getAttribute('data-user') === name;
+    card.classList.toggle('user-card--selected', isSelected);
+    card.classList.toggle('user-card--dim', !isSelected);
+  });
+
+  setTimeout(() => {
+    state.user = name;
+    localStorage.setItem('layered_user', name);
+    showDashboard();
+    loadUserStats();
+    // Reset card states so they're clean next time
+    cards.forEach(card => {
+      card.classList.remove('user-card--selected', 'user-card--dim');
+    });
+  }, 420);
 }
 
 function switchUser() {
@@ -165,8 +177,12 @@ function initRatingList() {
       data-label="${escapeHtml(r.label)}"
       onclick="selectRating(this, ${r.numeric}, '${escapeHtml(r.label)}')"
     >
+      <span class="rating-dot">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
       <span>${r.label}</span>
-      <span class="rating-dot"></span>
     </button>
   `).join('');
 }
@@ -341,16 +357,28 @@ async function fetchWeather() {
     const res = await fetch(`/api/weather?lat=${lat}&lon=${lon}`);
     if (!res.ok) throw new Error('Weather fetch failed');
     const data = await res.json();
+    if (!data.temp_f && data.temp_f !== 0) throw new Error('Bad weather data');
     state.weatherData = { ...data, lat, lon };
     state.confirmedTemp = data.temp_f;
     displayWeather(data);
   } catch (err) {
-    console.error('Weather error, using default:', err);
-    const res = await fetch(`/api/weather?lat=${DEFAULT_LAT}&lon=${DEFAULT_LON}`);
-    const data = await res.json();
-    state.weatherData = { ...data, lat: DEFAULT_LAT, lon: DEFAULT_LON };
-    state.confirmedTemp = data.temp_f;
-    displayWeather(data);
+    console.error('Weather error, falling back to Brooklyn:', err);
+    try {
+      const res = await fetch(`/api/weather?lat=${DEFAULT_LAT}&lon=${DEFAULT_LON}`);
+      if (!res.ok) throw new Error('Fallback weather failed');
+      const data = await res.json();
+      if (!data.temp_f && data.temp_f !== 0) throw new Error('Bad fallback data');
+      state.weatherData = { ...data, lat: DEFAULT_LAT, lon: DEFAULT_LON };
+      state.confirmedTemp = data.temp_f;
+      displayWeather(data);
+    } catch (fallbackErr) {
+      console.error('Weather completely failed:', fallbackErr);
+      // Hard fallback — show something useful rather than breaking
+      const fallback = { temp_f: 65, apparent_f: 63, condition: 'unknown', locationLabel: null };
+      state.weatherData = { ...fallback, lat: DEFAULT_LAT, lon: DEFAULT_LON };
+      state.confirmedTemp = 65;
+      displayWeather(fallback);
+    }
   }
 }
 
@@ -362,18 +390,25 @@ async function fetchRecWeather() {
   try {
     const { lat, lon } = await getLocation();
     const res = await fetch(`/api/weather?lat=${lat}&lon=${lon}`);
-    if (!res.ok) throw new Error();
+    if (!res.ok) throw new Error('Weather fetch failed');
     const data = await res.json();
+    if (!data.temp_f && data.temp_f !== 0) throw new Error('Bad weather data');
     state.recWeatherData = { ...data, lat, lon };
     displayRecWeather(data);
-  } catch {
+  } catch (err) {
+    console.error('Rec weather error, falling back to Brooklyn:', err);
     try {
       const res = await fetch(`/api/weather?lat=${DEFAULT_LAT}&lon=${DEFAULT_LON}`);
+      if (!res.ok) throw new Error('Fallback failed');
       const data = await res.json();
+      if (!data.temp_f && data.temp_f !== 0) throw new Error('Bad fallback data');
       state.recWeatherData = { ...data, lat: DEFAULT_LAT, lon: DEFAULT_LON };
       displayRecWeather(data);
-    } catch (err) {
-      console.error('Weather completely failed:', err);
+    } catch (fallbackErr) {
+      console.error('Rec weather completely failed:', fallbackErr);
+      const fallback = { temp_f: 65, apparent_f: 63, condition: 'unknown', locationLabel: null };
+      state.recWeatherData = { ...fallback, lat: DEFAULT_LAT, lon: DEFAULT_LON };
+      displayRecWeather(fallback);
     }
   }
 }
@@ -397,25 +432,63 @@ function setWeatherLoading(loading) {
   document.getElementById('weather-display').hidden = loading;
 }
 
+function buildLocationLine(locationLabel) {
+  if (locationLabel) return `looks like you're in ${locationLabel}`;
+  return 'checking your area…';
+}
+
 function displayWeather(data) {
-  document.getElementById('weather-temp-display').textContent = `${data.temp_f}°F`;
-  document.getElementById('weather-condition-display').textContent = data.condition;
-  document.getElementById('weather-location-display').textContent = data.locationLabel || 'Your location';
+  const temp = data.temp_f;
+  const feels = data.apparent_f;
+  const condition = data.condition || 'unknown';
+  const location = data.locationLabel;
+
+  document.getElementById('weather-location-display').textContent = buildLocationLine(location);
+  document.getElementById('weather-temp-display').textContent = `${temp}°F`;
+  document.getElementById('weather-feels-display').textContent =
+    (feels !== undefined && feels !== null) ? `feels like ${feels}°` : '';
+  document.getElementById('weather-condition-display').textContent = condition;
   document.getElementById('adj-temp-display').textContent = `${state.confirmedTemp}°F`;
+
   setWeatherLoading(false);
 }
 
+function buildConditionsSummary(temp, feels, condition, location) {
+  const place = location || 'out there';
+  const feelsNote = (feels !== undefined && feels !== null && Math.abs(feels - temp) >= 4)
+    ? ` but it feels more like ${feels}°`
+    : '';
+
+  // Pick a tone based on temperature
+  let tempLine;
+  if (temp <= 25) tempLine = `it is genuinely cold in ${place} — ${temp}°F${feelsNote}.`;
+  else if (temp <= 38) tempLine = `it's properly cold in ${place} — ${temp}°F${feelsNote}.`;
+  else if (temp <= 50) tempLine = `a chilly one in ${place} — ${temp}°F${feelsNote}.`;
+  else if (temp <= 62) tempLine = `pretty cool out in ${place} — ${temp}°F${feelsNote}.`;
+  else if (temp <= 73) tempLine = `genuinely nice in ${place} — ${temp}°F${feelsNote}.`;
+  else if (temp <= 83) tempLine = `warm out in ${place} — ${temp}°F${feelsNote}.`;
+  else tempLine = `it is hot out in ${place} — ${temp}°F${feelsNote}.`;
+
+  return tempLine.charAt(0).toUpperCase() + tempLine.slice(1);
+}
+
 function displayRecWeather(data) {
+  const temp = data.temp_f;
+  const feels = data.apparent_f;
+  const condition = data.condition || 'unknown';
+  const location = data.locationLabel;
+
+  document.getElementById('rec-conditions-summary').textContent =
+    buildConditionsSummary(temp, feels, condition, location);
+  document.getElementById('rec-temp-display').textContent = `${temp}°F`;
+  document.getElementById('rec-feels-display').textContent =
+    (feels !== undefined && feels !== null) ? `feels like ${feels}°` : '';
+  document.getElementById('rec-condition-display').textContent = condition;
+
   document.getElementById('rec-weather-loading').hidden = true;
   document.getElementById('rec-weather-display').hidden = false;
-  document.getElementById('rec-temp-display').textContent = `${data.temp_f}°F`;
-  document.getElementById('rec-condition-display').textContent = data.condition;
-  document.getElementById('rec-location-display').textContent = data.locationLabel || 'Your location';
 
-  // Show activity step
-  setTimeout(() => {
-    showRecActivityStep();
-  }, 300);
+  setTimeout(() => showRecActivityStep(), 300);
 }
 
 function showRecActivityStep() {
@@ -426,7 +499,8 @@ function showRecActivityStep() {
 }
 
 function adjustTemp(delta) {
-  state.confirmedTemp = (state.confirmedTemp || 70) + delta;
+  if (state.confirmedTemp === null || state.confirmedTemp === undefined) return;
+  state.confirmedTemp = state.confirmedTemp + delta;
   document.getElementById('adj-temp-display').textContent = `${state.confirmedTemp}°F`;
 }
 

@@ -31,24 +31,25 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // --- Helpers ---
 
+// Simple, friendly one-word/short conditions for display
 const WEATHER_CODES = {
-  0: 'Clear sky',
-  1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast',
-  45: 'Foggy', 48: 'Icy fog',
-  51: 'Light drizzle', 53: 'Drizzle', 55: 'Heavy drizzle',
-  56: 'Freezing drizzle', 57: 'Heavy freezing drizzle',
-  61: 'Light rain', 63: 'Rain', 65: 'Heavy rain',
-  66: 'Freezing rain', 67: 'Heavy freezing rain',
-  71: 'Light snow', 73: 'Snow', 75: 'Heavy snow',
-  77: 'Snow grains',
-  80: 'Rain showers', 81: 'Rain showers', 82: 'Heavy rain showers',
-  85: 'Snow showers', 86: 'Heavy snow showers',
-  95: 'Thunderstorm',
-  96: 'Thunderstorm with hail', 99: 'Thunderstorm with heavy hail'
+  0: 'sunny',
+  1: 'clear', 2: 'partly cloudy', 3: 'overcast',
+  45: 'foggy', 48: 'icy fog',
+  51: 'drizzly', 53: 'drizzly', 55: 'drizzly',
+  56: 'freezing drizzle', 57: 'freezing drizzle',
+  61: 'rainy', 63: 'rainy', 65: 'heavy rain',
+  66: 'freezing rain', 67: 'freezing rain',
+  71: 'snowy', 73: 'snowy', 75: 'heavy snow',
+  77: 'snow flurries',
+  80: 'showery', 81: 'showery', 82: 'heavy showers',
+  85: 'snow showers', 86: 'heavy snow showers',
+  95: 'stormy',
+  96: 'stormy', 99: 'stormy'
 };
 
 function weatherCodeToCondition(code) {
-  return WEATHER_CODES[code] || 'Unknown conditions';
+  return WEATHER_CODES[code] ?? 'mixed bag';
 }
 
 function getSeason(date = new Date()) {
@@ -61,17 +62,31 @@ function getSeason(date = new Date()) {
 
 async function reverseGeocode(lat, lon) {
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
-      { headers: { 'User-Agent': 'Layered-App/1.0' } }
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=16&addressdetails=1`,
+      {
+        headers: { 'User-Agent': 'Layered-App/1.0' },
+        signal: controller.signal
+      }
     );
+    clearTimeout(timeout);
     const data = await res.json();
     const addr = data.address || {};
-    const city = addr.city || addr.town || addr.suburb || addr.village || '';
-    const state = addr.state_code || addr.state || '';
-    return city ? `${city}${state ? ', ' + state : ''}` : 'Your location';
+    // Prefer neighborhood/suburb for walkable-city granularity (e.g. "Park Slope")
+    const place =
+      addr.neighbourhood ||
+      addr.suburb ||
+      addr.quarter ||
+      addr.city_district ||
+      addr.town ||
+      addr.city ||
+      addr.village ||
+      '';
+    return place || null;
   } catch {
-    return 'Your location';
+    return null;
   }
 }
 
@@ -160,13 +175,16 @@ app.get('/api/weather', async (req, res) => {
     const weatherData = await weatherRes.json();
 
     const cur = weatherData.current;
+    if (!cur) throw new Error('Unexpected Open-Meteo response shape');
+
+    // Open-Meteo's "current" parameter returns "weather_code" (with underscore)
     const temp_f = Math.round(cur.temperature_2m);
     const apparent_f = Math.round(cur.apparent_temperature);
-    const condition = weatherCodeToCondition(cur.weathercode);
+    const condition = weatherCodeToCondition(cur.weather_code ?? cur.weathercode);
     const windspeed = Math.round(cur.windspeed_10m);
     const humidity = cur.relativehumidity_2m;
 
-    const locationLabel = await reverseGeocode(lat, lon);
+    const locationLabel = await reverseGeocode(lat, lon); // null if unavailable
 
     res.json({ temp_f, apparent_f, condition, windspeed, humidity, locationLabel, raw: weatherData });
   } catch (err) {
@@ -183,6 +201,8 @@ app.post('/api/upload', upload.single('photo'), async (req, res) => {
     const user = (req.body.user || 'unknown').replace(/[^a-zA-Z]/g, '');
     const filename = `${user}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
 
+    console.log(`[upload] user=${user} file=${filename} size=${req.file.size}b`);
+
     const { data, error } = await supabase.storage
       .from('outfit-photos')
       .upload(filename, req.file.buffer, {
@@ -191,15 +211,22 @@ app.post('/api/upload', upload.single('photo'), async (req, res) => {
         cacheControl: '31536000'
       });
 
-    if (error) throw error;
+    if (error) {
+      console.error('[upload] Supabase storage error:');
+      console.error('  message:', error.message);
+      console.error('  status:', error.status || error.statusCode);
+      console.error('  full:', JSON.stringify(error, null, 2));
+      throw error;
+    }
 
     const { data: urlData } = supabase.storage
       .from('outfit-photos')
       .getPublicUrl(data.path);
 
+    console.log(`[upload] success → ${urlData.publicUrl}`);
     res.json({ url: urlData.publicUrl, path: data.path });
   } catch (err) {
-    console.error('Upload error:', err);
+    console.error('[upload] caught error:', err?.message || err);
     res.status(500).json({ error: err.message || 'Upload failed.' });
   }
 });
@@ -217,7 +244,28 @@ app.post('/api/submissions', async (req, res) => {
       weather_json
     } = req.body;
 
+    console.log('[submission] incoming:', {
+      user_name, temp_f, weather_condition,
+      outfit_rating_label, outfit_rating_numeric,
+      activity_type,
+      has_photo: !!photo_url,
+      has_description: !!outfit_description
+    });
+
+    // Validate required fields before hitting Supabase
+    const missing = [];
+    if (!user_name) missing.push('user_name');
+    if (!photo_url) missing.push('photo_url');
+    if (temp_f === undefined || temp_f === null) missing.push('temp_f');
+    if (!outfit_rating_label) missing.push('outfit_rating_label');
+    if (outfit_rating_numeric === undefined || outfit_rating_numeric === null) missing.push('outfit_rating_numeric');
+    if (missing.length) {
+      console.error('[submission] missing required fields:', missing);
+      return res.status(400).json({ error: `Missing fields: ${missing.join(', ')}` });
+    }
+
     const season = getSeason();
+    console.log(`[submission] season=${season}`);
 
     const { data, error } = await supabase
       .from('submissions')
@@ -234,11 +282,20 @@ app.post('/api/submissions', async (req, res) => {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('[submission] Supabase insert error:');
+      console.error('  message:', error.message);
+      console.error('  code:', error.code);
+      console.error('  details:', error.details);
+      console.error('  hint:', error.hint);
+      console.error('  full:', JSON.stringify(error, null, 2));
+      throw error;
+    }
 
+    console.log(`[submission] saved id=${data.id}`);
     res.json({ success: true, submission: data });
   } catch (err) {
-    console.error('Submission error:', err);
+    console.error('[submission] caught error:', err?.message || err);
     res.status(500).json({ error: err.message || 'Submission failed.' });
   }
 });
