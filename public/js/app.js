@@ -25,9 +25,17 @@ const ACTIVITIES = [
   { key: 'running_errands', label: 'Errands, allegedly',       emoji: '🛒' },
   { key: 'walking_around',  label: 'Walking with purpose',     emoji: '🚶' },
   { key: 'biking',          label: 'Biking (it counts)',        emoji: '🚴' },
-  { key: 'working_out',     label: 'Sweating on purpose',      emoji: '💪' },
-  { key: 'traveling',       label: 'Airport mode',             emoji: '✈️' },
   { key: 'just_existing',   label: 'Just existing, cozy',      emoji: '🛋️' }
+];
+
+const SUCCESS_SUBS = [
+  "keep feeding the machine.",
+  "your future self thanks you.",
+  "the data is piling up beautifully.",
+  "nailed it. now go touch grass.",
+  "growing wiser one outfit at a time.",
+  "science is a team sport.",
+  "the archive grows.",
 ];
 
 const SUCCESS_MESSAGES = [
@@ -64,47 +72,59 @@ const state = {
 // INIT
 // =============================================
 
+// Disable browser scroll restoration so the page always starts at the top
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  window.scrollTo(0, 0);
+
+  // Restore saved user silently — no visual selection until user taps
   const savedUser = localStorage.getItem('layered_user');
   if (savedUser && ['Parker', 'Ali'].includes(savedUser)) {
     state.user = savedUser;
-    showDashboard();
-    loadUserStats();
   }
   initRatingList();
   initActivityChips();
   initWeatherControls();
   initSubmissionControls();
+
+  // Recommendation — wire up here, not in a second DOMContentLoaded
+  const getRecBtn = document.getElementById('get-rec-btn');
+  if (getRecBtn) getRecBtn.addEventListener('click', fetchRecommendation);
 });
 
 // =============================================
 // USER MANAGEMENT
 // =============================================
 
-function selectUser(name) {
-  // Animate the card before transitioning
-  const cards = document.querySelectorAll('.user-card');
-  cards.forEach(card => {
-    const isSelected = card.getAttribute('data-user') === name;
+function updateUserCardStates(selectedName) {
+  document.querySelectorAll('.user-card').forEach(card => {
+    const isSelected = card.getAttribute('data-user') === selectedName;
     card.classList.toggle('user-card--selected', isSelected);
-    card.classList.toggle('user-card--dim', !isSelected);
+    card.classList.toggle('user-card--dim', !!selectedName && !isSelected);
   });
+}
+
+function selectUser(name) {
+  // Apply selected state immediately and persistently
+  updateUserCardStates(name);
+
+  state.user = name;
+  localStorage.setItem('layered_user', name);
 
   setTimeout(() => {
-    state.user = name;
-    localStorage.setItem('layered_user', name);
     showDashboard();
     loadUserStats();
-    // Reset card states so they're clean next time
-    cards.forEach(card => {
-      card.classList.remove('user-card--selected', 'user-card--dim');
-    });
-  }, 420);
+    document.getElementById('dashboard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 300);
 }
 
 function switchUser() {
   state.user = null;
   localStorage.removeItem('layered_user');
+  updateUserCardStates(null);
   document.getElementById('dashboard').hidden = true;
   document.getElementById('user-select-section').scrollIntoView({ behavior: 'smooth' });
 }
@@ -113,7 +133,6 @@ function showDashboard() {
   document.getElementById('dashboard').hidden = false;
   document.getElementById('greeting-name').textContent = state.user;
   goHome();
-  document.getElementById('app').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function loadUserStats() {
@@ -154,6 +173,7 @@ function startSubmission() {
   document.getElementById('recommendation-view').hidden = true;
   resetSubmissionForm();
   document.getElementById('dashboard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  fetchWeather();
 }
 
 function startRecommendation() {
@@ -170,12 +190,13 @@ function startRecommendation() {
 
 function initRatingList() {
   const container = document.getElementById('rating-list');
-  container.innerHTML = RATINGS.map((r) => `
+  container.innerHTML = RATINGS.map((r, i) => `
     <button
       class="rating-option"
       data-numeric="${r.numeric}"
       data-label="${escapeHtml(r.label)}"
-      onclick="selectRating(this, ${r.numeric}, '${escapeHtml(r.label)}')"
+      data-index="${i}"
+      onclick="selectRating(this)"
     >
       <span class="rating-dot">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
@@ -216,9 +237,14 @@ function initActivityChips() {
 }
 
 function initWeatherControls() {
-  document.getElementById('temp-plus').addEventListener('click', () => adjustTemp(1));
-  document.getElementById('temp-minus').addEventListener('click', () => adjustTemp(-1));
   document.getElementById('confirm-weather-btn').addEventListener('click', onWeatherConfirmed);
+
+  const slider = document.getElementById('temp-slider');
+  slider.addEventListener('input', () => {
+    state.confirmedTemp = parseInt(slider.value, 10);
+    document.getElementById('adj-temp-display').textContent = `${state.confirmedTemp}°F`;
+    document.getElementById('weather-temp-display').textContent = `${state.confirmedTemp}°F`;
+  });
 }
 
 function initSubmissionControls() {
@@ -271,9 +297,10 @@ async function onFileSelected(e) {
     `;
     zone.onclick = triggerFileInput;
 
-    // Advance to weather step
-    showStep('weather');
-    fetchWeather();
+    // Build summary and advance to submit
+    const desc = document.getElementById('outfit-desc').value.trim();
+    buildSubmitSummary(desc);
+    showStep('submit');
   } catch (err) {
     console.error('Image processing failed:', err);
     alert('Could not process that image. Try another one.');
@@ -430,6 +457,13 @@ function getLocation() {
 function setWeatherLoading(loading) {
   document.getElementById('weather-loading').hidden = !loading;
   document.getElementById('weather-display').hidden = loading;
+
+  // Once weather is revealed, scroll so the confirm button sits near the bottom of the viewport
+  if (!loading) {
+    setTimeout(() => {
+      document.getElementById('confirm-weather-btn').scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }, 120);
+  }
 }
 
 function buildLocationLine(locationLabel) {
@@ -442,13 +476,30 @@ function displayWeather(data) {
   const feels = data.apparent_f;
   const condition = data.condition || 'unknown';
   const location = data.locationLabel;
+  const wind = data.wind_mph;
 
   document.getElementById('weather-location-display').textContent = buildLocationLine(location);
   document.getElementById('weather-temp-display').textContent = `${temp}°F`;
   document.getElementById('weather-feels-display').textContent =
     (feels !== undefined && feels !== null) ? `feels like ${feels}°` : '';
   document.getElementById('weather-condition-display').textContent = condition;
-  document.getElementById('adj-temp-display').textContent = `${state.confirmedTemp}°F`;
+
+  const windEl = document.getElementById('weather-wind-display');
+  if (windEl) {
+    if (wind !== undefined && wind !== null) {
+      windEl.textContent = `${wind} mph wind`;
+      windEl.hidden = false;
+    } else {
+      windEl.hidden = true;
+    }
+  }
+
+  // Sync slider to actual temp
+  const slider = document.getElementById('temp-slider');
+  if (slider) {
+    slider.value = state.confirmedTemp;
+    document.getElementById('adj-temp-display').textContent = `${state.confirmedTemp}°F`;
+  }
 
   setWeatherLoading(false);
 }
@@ -498,12 +549,6 @@ function showRecActivityStep() {
   setTimeout(() => step.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
 }
 
-function adjustTemp(delta) {
-  if (state.confirmedTemp === null || state.confirmedTemp === undefined) return;
-  state.confirmedTemp = state.confirmedTemp + delta;
-  document.getElementById('adj-temp-display').textContent = `${state.confirmedTemp}°F`;
-}
-
 function onWeatherConfirmed() {
   showStep('rating');
 }
@@ -512,14 +557,15 @@ function onWeatherConfirmed() {
 // SUBMISSION — RATING
 // =============================================
 
-function selectRating(el, numeric, label) {
-  // Clear previous
+function selectRating(el) {
+  const numeric = parseInt(el.getAttribute('data-numeric'), 10);
+  const label = el.getAttribute('data-label');
+
   document.querySelectorAll('.rating-option').forEach(b => b.classList.remove('selected'));
   el.classList.add('selected');
 
   state.selectedRating = { numeric, label };
 
-  // Advance after brief delay
   setTimeout(() => showStep('activity'), 350);
 }
 
@@ -555,9 +601,7 @@ function selectActivity(el, key, context) {
 // =============================================
 
 function onDescConfirmed() {
-  const desc = document.getElementById('outfit-desc').value.trim();
-  buildSubmitSummary(desc);
-  showStep('submit');
+  showStep('photo');
 }
 
 function buildSubmitSummary(desc) {
@@ -635,9 +679,13 @@ async function submitOutfit() {
 }
 
 function showSuccess() {
-  const messages = SUCCESS_MESSAGES;
-  const msg = messages[Math.floor(Math.random() * messages.length)];
+  const msg = SUCCESS_MESSAGES[Math.floor(Math.random() * SUCCESS_MESSAGES.length)];
   document.getElementById('success-message').textContent = msg;
+
+  const subEl = document.getElementById('success-sub');
+  if (subEl) {
+    subEl.textContent = SUCCESS_SUBS[Math.floor(Math.random() * SUCCESS_SUBS.length)];
+  }
 
   // Hide all steps, show success
   document.querySelectorAll('#submission-view .step').forEach(s => { s.hidden = true; });
@@ -648,11 +696,6 @@ function showSuccess() {
 // =============================================
 // RECOMMENDATION
 // =============================================
-
-document.addEventListener('DOMContentLoaded', () => {
-  const getRecBtn = document.getElementById('get-rec-btn');
-  if (getRecBtn) getRecBtn.addEventListener('click', fetchRecommendation);
-});
 
 async function fetchRecommendation() {
   const weather = state.recWeatherData;
@@ -792,14 +835,15 @@ function resetSubmissionForm() {
   state.selectedRating = null;
   state.selectedActivity = null;
 
-  // Reset DOM
-  const stepsToHide = ['weather', 'rating', 'activity', 'desc', 'submit', 'success'];
+  // Reset DOM — weather is the first visible step
+  const stepsToHide = ['photo', 'rating', 'activity', 'desc', 'submit', 'success'];
   stepsToHide.forEach(id => {
     const el = document.getElementById(`step-${id}`);
     if (el) { el.hidden = true; el.classList.remove('step-enter'); }
   });
 
-  document.getElementById('step-photo').hidden = false;
+  const weatherStep = document.getElementById('step-weather');
+  if (weatherStep) { weatherStep.hidden = false; weatherStep.classList.remove('step-enter'); }
   document.getElementById('photo-banner').hidden = true;
 
   resetUploadZone();
@@ -853,7 +897,7 @@ function escapeHtml(str) {
 }
 
 function triggerConfetti() {
-  const colors = ['#c8704a', '#d4845e', '#f2ede8', '#ffffff', '#e0c4b4'];
+  const colors = ['#5b5ef4', '#a259f7', '#e8498a', '#f97316', '#fbbf24', '#ffffff'];
 
   confetti({
     particleCount: 90,

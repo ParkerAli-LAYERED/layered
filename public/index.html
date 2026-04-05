@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#0f0f0f">
+  <meta name="theme-color" content="#0a0a0a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Layered</title>
@@ -16,19 +16,23 @@
 
   <!-- ========== HERO ========== -->
   <section id="hero">
-    <div class="hero-content">
-      <h1 class="hero-title">LAYERED</h1>
-      <p class="hero-tagline">dress like you know what you're doing</p>
-      <button class="hero-cta" onclick="scrollToApp()">
-        <span>let's go</span>
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <path d="M8 3v10M3 8l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
+    <div class="hero-lockup">
+      <div class="hero-wordmark-wrap">
+        <h1 class="hero-title" data-text="LAYERED" aria-label="Layered">LAYERED</h1>
+      </div>
+      <div class="hero-text">
+        <p class="hero-tagline">dress like you know what you're doing</p>
+        <button class="hero-cta" onclick="scrollToApp()">
+          <span>get started</span>
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M8 3v10M3 8l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
     </div>
     <div class="hero-scroll-hint" aria-hidden="true">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <path d="M12 5v14M5 12l7 7 7-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M12 5v14M5 12l7 7 7-7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </div>
   </section>
@@ -119,10 +123,90 @@
           <h2 class="view-title">Log an Outfit</h2>
         </div>
 
-        <!-- Step: Photo -->
-        <div class="step" id="step-photo">
+        <!-- Step 01: Conditions (FIRST) -->
+        <div class="step" id="step-weather">
           <div class="step-header">
             <span class="step-num">01</span>
+            <h3 class="step-title">The conditions.</h3>
+            <p class="step-sub">what was it actually like out there</p>
+          </div>
+          <div id="weather-loading" class="loading-block">
+            <div class="spinner"></div>
+            <p>checking the skies...</p>
+          </div>
+          <div id="weather-display" hidden>
+            <div class="weather-card-v2">
+              <p class="weather-location-line" id="weather-location-display"></p>
+              <div class="weather-pills-row">
+                <span class="weather-pill weather-pill-temp" id="weather-temp-display"></span>
+                <span class="weather-pill weather-pill-feels" id="weather-feels-display"></span>
+                <span class="weather-pill weather-pill-wind" id="weather-wind-display" hidden></span>
+                <span class="weather-pill weather-pill-cond" id="weather-condition-display"></span>
+              </div>
+            </div>
+            <div class="temp-slider-wrap">
+              <div class="temp-slider-header">
+                <span class="temp-slider-label">feels off? slide to adjust</span>
+                <span class="temp-slider-value" id="adj-temp-display">—</span>
+              </div>
+              <input
+                type="range"
+                id="temp-slider"
+                class="temp-slider"
+                min="-20"
+                max="120"
+                step="1"
+                aria-label="Adjust temperature"
+              >
+            </div>
+            <button class="confirm-btn" id="confirm-weather-btn">that's right →</button>
+          </div>
+        </div>
+
+        <!-- Step 02: Rating -->
+        <div class="step" id="step-rating" hidden>
+          <div class="step-header">
+            <span class="step-num">02</span>
+            <h3 class="step-title">How'd it go out there?</h3>
+            <p class="step-sub">temperature comfort, not vibes</p>
+          </div>
+          <div class="rating-list" id="rating-list">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+
+        <!-- Step 03: Activity -->
+        <div class="step" id="step-activity" hidden>
+          <div class="step-header">
+            <span class="step-num">03</span>
+            <h3 class="step-title">What were you doing?</h3>
+            <p class="step-sub">this helps match future recommendations</p>
+          </div>
+          <div class="activity-chips" id="activity-chips">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+
+        <!-- Step 04: Description -->
+        <div class="step" id="step-desc" hidden>
+          <div class="step-header">
+            <span class="step-num">04</span>
+            <h3 class="step-title">What did you wear?</h3>
+            <p class="step-sub">your words — we'll borrow them later</p>
+          </div>
+          <textarea
+            id="outfit-desc"
+            class="outfit-textarea"
+            placeholder="t-shirt, hoodie, light jacket, jeans… and the shoes you're lying to yourself about"
+            rows="4"
+          ></textarea>
+          <button class="confirm-btn" id="confirm-desc-btn">looks right →</button>
+        </div>
+
+        <!-- Step 05: Photo (last before submit) -->
+        <div class="step" id="step-photo" hidden>
+          <div class="step-header">
+            <span class="step-num">05</span>
             <h3 class="step-title">The fit.</h3>
             <p class="step-sub">show us what you walked out the door in</p>
           </div>
@@ -138,77 +222,7 @@
           <input type="file" id="file-input" accept="image/*" hidden aria-label="Upload outfit photo">
         </div>
 
-        <!-- Step: Weather -->
-        <div class="step" id="step-weather" hidden>
-          <div class="step-header">
-            <span class="step-num">02</span>
-            <h3 class="step-title">The conditions.</h3>
-            <p class="step-sub">what was it actually like out there</p>
-          </div>
-          <div id="weather-loading" class="loading-block">
-            <div class="spinner"></div>
-            <p>checking the skies...</p>
-          </div>
-          <div id="weather-display" hidden>
-            <div class="weather-card-v2">
-              <p class="weather-location-line" id="weather-location-display"></p>
-              <div class="weather-pills-row">
-                <span class="weather-pill weather-pill-temp" id="weather-temp-display"></span>
-                <span class="weather-pill weather-pill-feels" id="weather-feels-display"></span>
-                <span class="weather-pill weather-pill-cond" id="weather-condition-display"></span>
-              </div>
-            </div>
-            <p class="adj-label">feel off? nudge the temperature.</p>
-            <div class="temp-adjuster">
-              <button class="adj-btn" id="temp-minus" aria-label="Decrease temperature">−</button>
-              <span class="adj-value" id="adj-temp-display"></span>
-              <button class="adj-btn" id="temp-plus" aria-label="Increase temperature">+</button>
-            </div>
-            <button class="confirm-btn" id="confirm-weather-btn">that's right →</button>
-          </div>
-        </div>
-
-        <!-- Step: Rating -->
-        <div class="step" id="step-rating" hidden>
-          <div class="step-header">
-            <span class="step-num">03</span>
-            <h3 class="step-title">How'd it go out there?</h3>
-            <p class="step-sub">temperature comfort, not vibes</p>
-          </div>
-          <div class="rating-list" id="rating-list">
-            <!-- Injected by JS -->
-          </div>
-        </div>
-
-        <!-- Step: Activity -->
-        <div class="step" id="step-activity" hidden>
-          <div class="step-header">
-            <span class="step-num">04</span>
-            <h3 class="step-title">What were you doing?</h3>
-            <p class="step-sub">this helps match future recommendations</p>
-          </div>
-          <div class="activity-chips" id="activity-chips">
-            <!-- Injected by JS -->
-          </div>
-        </div>
-
-        <!-- Step: Description -->
-        <div class="step" id="step-desc" hidden>
-          <div class="step-header">
-            <span class="step-num">05</span>
-            <h3 class="step-title">What did you wear?</h3>
-            <p class="step-sub">your words — we'll borrow them later</p>
-          </div>
-          <textarea
-            id="outfit-desc"
-            class="outfit-textarea"
-            placeholder="t-shirt, hoodie, light jacket, jeans… and the shoes you're lying to yourself about"
-            rows="4"
-          ></textarea>
-          <button class="confirm-btn" id="confirm-desc-btn">looks right →</button>
-        </div>
-
-        <!-- Step: Submit -->
+        <!-- Step 06: Submit -->
         <div class="step" id="step-submit" hidden>
           <div class="step-header">
             <span class="step-num">06</span>
@@ -227,6 +241,7 @@
           <div class="success-content">
             <div class="success-check">✓</div>
             <p class="success-message" id="success-message">Filed.</p>
+            <p class="success-sub" id="success-sub"></p>
             <button class="confirm-btn" style="margin-top: 32px;" onclick="goHome()">back home</button>
           </div>
         </div>
@@ -266,7 +281,7 @@
           </div>
         </div>
 
-        <!-- Step 2: Activity selection (for recommendation) -->
+        <!-- Step 2: Activity selection -->
         <div id="rec-activity-step" hidden>
           <div class="step-header" style="margin-top: 32px;">
             <h3 class="step-title">What are you doing today?</h3>
