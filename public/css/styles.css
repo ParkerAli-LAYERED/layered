@@ -10,11 +10,11 @@
   --grad-gold:    #fbbf24;
   --logo-gradient: linear-gradient(95deg, #5b5ef4 0%, #a259f7 25%, #e8498a 52%, #f97316 78%, #fbbf24 100%);
 
-  /* Surfaces — subtly indigo-tinted */
-  --bg:          #0a0a0c;
-  --surface:     #111116;
-  --surface-2:   #18181f;
-  --surface-3:   #202028;
+  /* Surfaces — purple-pink ambient warmth */
+  --bg:          #090910;
+  --surface:     #12111b;
+  --surface-2:   #1a1827;
+  --surface-3:   #221f30;
 
   /* Borders — indigo-tinted */
   --border:        rgba(91,94,244,0.12);
@@ -48,8 +48,9 @@
   --shadow-btn:  0 1px 4px rgba(0,0,0,0.4);
   --shadow-sm:   0 1px 3px rgba(0,0,0,0.3);
 
-  --font-display: 'Bebas Neue', 'Arial Black', sans-serif;
-  --font-body:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-wordmark: 'Bebas Neue', 'Arial Black', sans-serif;
+  --font-display:  'Syne', 'Inter', sans-serif;
+  --font-body:     'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
   --radius:    8px;
   --radius-lg: 12px;
@@ -85,18 +86,17 @@ body {
   overflow-x: hidden;
 }
 
-button {
+button, input, textarea, select {
   font-family: var(--font-body);
+}
+
+button {
   cursor: pointer;
   border: none;
   background: none;
   color: inherit;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
-}
-
-input, textarea {
-  font-family: var(--font-body);
 }
 
 img {
@@ -110,151 +110,193 @@ img {
 
 #hero {
   height: 100dvh;
-  min-height: 560px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  min-height: 600px;
+  display: block;
   position: relative;
-  background: #0a0a0a;
+  /*
+   * Sky area (top 30%): dark enough for title legibility
+   * Middle: fully open — illustration breathes, people are visible
+   * Bottom: dissolves into the dark app bg — no hard line
+   */
+  background:
+    linear-gradient(to bottom,
+      rgba(9,9,16,0.82) 0%,
+      rgba(9,9,16,0.28) 14%,
+      rgba(9,9,16,0.05) 25%,
+      transparent 36%,
+      transparent 54%,
+      rgba(9,9,16,0.22) 64%,
+      rgba(9,9,16,0.62) 74%,
+      rgba(9,9,16,0.90) 85%,
+      rgb(9,9,16)       94%,
+      rgb(9,9,16)       100%
+    ),
+    url('/images/Seasonal%20contrast%20in%20the%20city.png') center 15% / cover no-repeat;
   overflow: hidden;
 }
 
-/* Main lockup — centered, tight */
-.hero-lockup {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+/* ── Ring base ── */
+.banding-rings {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Hero — cool top-right */
+.banding-rings--cool {
+  top: 0; right: 0;
+  width: clamp(300px, 60vw, 500px);
+  height: clamp(300px, 60vw, 500px);
+}
+
+/* Hero — warm bottom-left, mirrors sunny side of illustration */
+.banding-rings--warm {
+  bottom: 0; left: 0;
+  width: clamp(260px, 55vw, 420px);
+  height: clamp(260px, 55vw, 420px);
+}
+
+/* App — cool top-right */
+.banding-rings--app {
+  top: 0; right: 0;
+  width: clamp(280px, 75vw, 440px);
+  height: clamp(280px, 75vw, 440px);
+}
+
+/* App — warm bottom-left */
+.banding-rings--app-warm {
+  bottom: 0; left: 0;
+  width: clamp(220px, 60vw, 340px);
+  height: clamp(220px, 60vw, 340px);
+}
+
+/* ── Title wrap — floats in the negative sky space above the people's heads ── */
+.hero-title-wrap {
+  position: absolute;
+  top: clamp(36px, 11vh, 88px);
+  left: 0;
+  right: 0;
   text-align: center;
-  width: min(420px, calc(100vw - 40px));
-  gap: 0;
-  animation: heroFadeIn 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+  z-index: 2;
+  animation: titleDrop 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.hero-wordmark-wrap {
-  margin-bottom: 20px;
+@keyframes titleDrop {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-/* LAYERED wordmark — single line with iridescent gradient + glitch slice */
+/* ── LAYERED wordmark — concentric rings projected through the letterforms ── */
 .hero-title {
-  font-family: var(--font-display);
-  font-size: clamp(52px, 14vw, 96px);
-  line-height: 1;
-  letter-spacing: 0.08em;
+  font-family: var(--font-wordmark);
+  font-size: clamp(34px, 8.5vw, 52px);
+  line-height: 0.9;
+  letter-spacing: 0.22em;
   user-select: none;
   position: relative;
-  background: linear-gradient(
-    95deg,
-    #5b5ef4 0%,
-    #a259f7 25%,
-    #e8498a 52%,
-    #f97316 78%,
-    #fbbf24 100%
+  display: block;
+  /*
+   * repeating-radial-gradient makes the rings radiate from the center of the word.
+   * background-size controls ring frequency — smaller = tighter rings, more topographic.
+   * The letters become windows into the ring system.
+   */
+  background: repeating-radial-gradient(
+    ellipse at 50% 50%,
+    #fbbf24  0%,
+    #f97316  14%,
+    #e8498a  28%,
+    #a259f7  42%,
+    #5b5ef4  56%,
+    #3a38c0  66%,
+    #5b5ef4  74%,
+    #a259f7  84%,
+    #e8498a  92%,
+    #fbbf24  100%
   );
+  background-size: 180px 160px;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
-  display: inline-block;
+  filter:
+    drop-shadow(0 2px 14px rgba(0,0,0,0.72))
+    drop-shadow(0 0 44px rgba(0,0,0,0.48));
+  /* Slow drift animation — rings gently shift, like they're turning */
+  animation: ringDrift 12s linear infinite;
 }
 
-/* Glitch slice */
-.hero-title::before {
-  content: attr(data-text);
+@keyframes ringDrift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ── Bottom group — tagline + CTA over the dark dissolve ── */
+.hero-bottom {
   position: absolute;
-  inset: 0;
-  font-family: inherit;
-  font-size: inherit;
-  letter-spacing: inherit;
-  line-height: inherit;
-  background: linear-gradient(
-    95deg,
-    #5b5ef4 0%,
-    #a259f7 25%,
-    #e8498a 52%,
-    #f97316 78%,
-    #fbbf24 100%
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-  clip-path: inset(38% 0 48% 0);
-  transform: translateX(6px);
-  filter: hue-rotate(12deg) brightness(1.3);
-  animation: glitchSlice 5s ease-in-out infinite;
-}
-
-@keyframes glitchSlice {
-  0%, 75%, 100% { opacity: 1; transform: translateX(6px);  clip-path: inset(38% 0 48% 0); }
-  77%            { transform: translateX(13px); clip-path: inset(33% 0 52% 0); }
-  79%            { transform: translateX(2px);  clip-path: inset(40% 0 45% 0); }
-  81%            { transform: translateX(8px);  opacity: 0.7; }
-  83%            { transform: translateX(6px);  opacity: 1; }
-}
-
-/* Tagline + CTA — tight below the wordmark */
-.hero-text {
+  bottom: clamp(44px, 9vh, 68px);
+  left: 0;
+  right: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
+  z-index: 2;
+  animation: heroFadeIn 0.9s 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .hero-tagline {
-  font-size: 10px;
-  font-weight: 400;
-  letter-spacing: 0.28em;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.35);
-  line-height: 1.5;
+  color: rgba(255,255,255,0.50);
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .hero-cta {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  background: transparent;
-  color: #ffffff;
+  gap: 9px;
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.90);
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.20em;
   text-transform: uppercase;
-  padding: 13px 28px;
-  border: 1px solid rgba(255,255,255,0.35);
-  border-radius: 0;
-  transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+  padding: 14px 32px;
+  border: 1px solid rgba(255,255,255,0.28);
+  border-radius: 40px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background 0.18s, border-color 0.18s;
   touch-action: manipulation;
   min-height: 48px;
+  white-space: nowrap;
 }
 
-.hero-cta:hover {
-  border-color: rgba(255,255,255,0.75);
-  color: #ffffff;
-}
-
-.hero-cta:active {
-  background: rgba(255,255,255,0.06);
-  border-color: rgba(255,255,255,0.6);
-}
-
-@keyframes heroFadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
+.hero-cta:hover  { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.50); }
+.hero-cta:active { background: rgba(255,255,255,0.22); }
 
 .hero-scroll-hint {
   position: absolute;
-  bottom: 28px;
+  bottom: 18px;
   left: 50%;
   transform: translateX(-50%);
-  color: rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.22);
+  z-index: 2;
   animation: scrollBob 2.4s ease-in-out infinite;
 }
 
 @keyframes scrollBob {
   0%, 100% { transform: translateX(-50%) translateY(0); }
   50%       { transform: translateX(-50%) translateY(7px); }
+}
+
+@keyframes heroFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* =============================================
@@ -265,6 +307,23 @@ img {
   max-width: var(--max-w);
   margin: 0 auto;
   padding: 0 var(--pad) 80px;
+  position: relative;
+  /* overflow: clip preserves ring clipping without creating a scroll container
+     (overflow: hidden would trap scrollIntoView and cause the snap-back bug) */
+  overflow: clip;
+}
+
+/* Warm/cool ambient glow at the very top of the app — bridges the illustration dissolve */
+#app::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 280px;
+  background:
+    radial-gradient(ellipse 70% 180px at 20% 0%, rgba(249,115,22,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 70% 180px at 80% 0%, rgba(91,94,244,0.07) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* =============================================
@@ -316,11 +375,11 @@ img {
   border-color: var(--grad-gold);
 }
 
-/* Selected — lit up with green ring */
+/* Selected — accent ring, consistent with rating/chip selected states */
 .user-card--selected {
   opacity: 1;
-  border-color: var(--success);
-  box-shadow: 0 0 0 1px var(--success), 0 4px 20px rgba(76,175,125,0.12);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 4px 20px rgba(91,94,244,0.14);
 }
 
 /* The other card dims further when one is chosen */
@@ -343,7 +402,7 @@ img {
   background: var(--surface-3);
   border: 1px solid var(--border-md);
   border-radius: 50%;
-  font-family: var(--font-display);
+  font-family: var(--font-wordmark);
   font-size: 26px;
   color: var(--text-2);
   transition: opacity 0.18s;
@@ -355,7 +414,7 @@ img {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--success);
+  background: var(--accent);
   border-radius: 50%;
   color: #fff;
   opacity: 0;
@@ -381,7 +440,7 @@ img {
 }
 
 .user-card--selected .user-name {
-  color: var(--success);
+  color: var(--accent-light);
 }
 
 /* =============================================
@@ -396,27 +455,39 @@ img {
 
 .user-bar {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 28px;
+  margin-bottom: 32px;
 }
 
 .user-bar-greeting {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text-3);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  font-weight: 600;
+  letter-spacing: 0.06em;
+  font-weight: 400;
+  line-height: 1.3;
 }
 
 .user-bar-name {
-  color: var(--accent);
+  font-family: var(--font-display);
+  display: block;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin-top: 3px;
+  background: var(--logo-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 .user-bar-sub {
   font-size: 12px;
   color: var(--text-3);
-  margin-top: 3px;
+  margin-top: 4px;
+  font-weight: 400;
 }
 
 .switch-btn {
@@ -442,43 +513,54 @@ img {
 .action-cards {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .action-card {
   display: flex;
   align-items: center;
   gap: 18px;
-  padding: 20px;
+  padding: 22px 20px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: 16px;
   text-align: left;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color 0.15s, background 0.15s, transform 0.12s;
   width: 100%;
   touch-action: manipulation;
-  min-height: 44px;
+  min-height: 80px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.4);
 }
 
 .action-card:active {
   background: var(--surface-2);
   border-color: var(--hover);
+  transform: scale(0.985);
 }
 
 .action-icon {
-  font-size: 26px;
+  font-size: 28px;
   flex-shrink: 0;
   line-height: 1;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-3);
+  border-radius: 12px;
+  border: 1px solid var(--border-md);
 }
 
 .action-text {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
 }
 
 .action-title {
-  font-size: 16px;
+  font-family: var(--font-display);
+  font-size: 17px;
   font-weight: 700;
   color: var(--text);
   letter-spacing: -0.01em;
@@ -488,6 +570,7 @@ img {
   font-size: 12px;
   color: var(--text-3);
   font-weight: 400;
+  line-height: 1.4;
 }
 
 /* =============================================
@@ -526,8 +609,9 @@ img {
 
 .view-title {
   font-family: var(--font-display);
-  font-size: 26px;
-  letter-spacing: 0.1em;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   color: var(--text);
 }
 
@@ -563,11 +647,12 @@ img {
 }
 
 .step-title {
-  font-size: 22px;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
   color: var(--text);
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
   margin-top: 4px;
 }
 
@@ -680,9 +765,10 @@ img {
 .weather-card-v2 {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 18px 20px;
+  border-radius: 14px;
+  padding: 20px;
   margin-bottom: 20px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.35);
 }
 
 .weather-location-line {
@@ -755,7 +841,7 @@ img {
 }
 
 .temp-slider-value {
-  font-family: var(--font-display);
+  font-family: var(--font-wordmark);
   font-size: 22px;
   color: var(--accent);
   letter-spacing: 0.04em;
@@ -864,27 +950,35 @@ img {
 
 /* Activity chips */
 .activity-chips {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
+}
+
+/* Odd last chip — spans the row but stays same width as siblings, centered */
+.activity-chip:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  max-width: calc(50% - 4px);
+  margin: 0 auto;
 }
 
 .activity-chip {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
+  padding: 12px 16px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 24px;
+  border-radius: 14px;
   font-size: 13px;
   font-weight: 500;
   color: var(--text-2);
   transition: border-color 0.15s, background 0.15s;
   cursor: pointer;
-  white-space: nowrap;
   touch-action: manipulation;
-  min-height: 44px;
+  min-height: 52px;
+  width: 100%;
+  justify-content: flex-start;
 }
 
 .activity-chip:active {
@@ -1083,8 +1177,9 @@ img {
 }
 
 .rec-conditions-summary {
+  font-family: var(--font-display);
   font-size: 17px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text);
   line-height: 1.4;
 }
@@ -1121,7 +1216,7 @@ img {
 }
 
 .conf-pct {
-  font-family: var(--font-display);
+  font-family: var(--font-wordmark);
   font-size: 24px;
   color: #fff;
   letter-spacing: 0.04em;

@@ -24,7 +24,7 @@ const ACTIVITIES = [
   { key: 'commuting',       label: 'Commuting, heroically',   emoji: '🚇' },
   { key: 'running_errands', label: 'Errands, allegedly',       emoji: '🛒' },
   { key: 'walking_around',  label: 'Walking with purpose',     emoji: '🚶' },
-  { key: 'biking',          label: 'Biking (it counts)',        emoji: '🚴' },
+  { key: 'biking',          label: 'Biking',                    emoji: '🚴' },
   { key: 'just_existing',   label: 'Just existing, cozy',      emoji: '🛋️' }
 ];
 
@@ -172,7 +172,6 @@ function startSubmission() {
   document.getElementById('submission-view').hidden = false;
   document.getElementById('recommendation-view').hidden = true;
   resetSubmissionForm();
-  document.getElementById('dashboard').scrollIntoView({ behavior: 'smooth', block: 'start' });
   fetchWeather();
 }
 
@@ -180,7 +179,9 @@ function startRecommendation() {
   document.getElementById('home-view').hidden = true;
   document.getElementById('submission-view').hidden = true;
   document.getElementById('recommendation-view').hidden = false;
-  document.getElementById('dashboard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setTimeout(() => {
+    document.getElementById('recommendation-view').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 40);
   fetchRecWeather();
 }
 
@@ -458,11 +459,14 @@ function setWeatherLoading(loading) {
   document.getElementById('weather-loading').hidden = !loading;
   document.getElementById('weather-display').hidden = loading;
 
-  // Once weather is revealed, scroll so the confirm button sits near the bottom of the viewport
   if (!loading) {
     setTimeout(() => {
-      document.getElementById('confirm-weather-btn').scrollIntoView({ behavior: 'smooth', block: 'end' });
-    }, 120);
+      const btn = document.getElementById('confirm-weather-btn');
+      const rect = btn.getBoundingClientRect();
+      // Scroll so the button sits 40px above the bottom of the viewport
+      const targetY = window.scrollY + rect.bottom - window.innerHeight + 40;
+      window.scrollTo({ top: targetY, behavior: 'smooth' });
+    }, 300);
   }
 }
 
@@ -819,7 +823,7 @@ function showStep(stepId) {
   step.classList.add('step-enter');
   setTimeout(() => {
     step.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 80);
+  }, 100);
 }
 
 function resetSubmissionForm() {

@@ -9,27 +9,70 @@
   <title>Layered</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
 
   <!-- ========== HERO ========== -->
   <section id="hero">
-    <div class="hero-lockup">
-      <div class="hero-wordmark-wrap">
-        <h1 class="hero-title" data-text="LAYERED" aria-label="Layered">LAYERED</h1>
-      </div>
-      <div class="hero-text">
-        <p class="hero-tagline">dress like you know what you're doing</p>
-        <button class="hero-cta" onclick="scrollToApp()">
-          <span>get started</span>
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M8 3v10M3 8l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-      </div>
+
+    <!-- Cool rings — top-right, purple→pink bloom -->
+    <svg class="banding-rings banding-rings--cool" viewBox="0 0 480 480" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="480" cy="0" r="22"  fill="none" stroke="rgba(40,18,80,0.22)"  stroke-width="0.8"/>
+      <circle cx="480" cy="0" r="44"  fill="none" stroke="rgba(60,24,112,0.32)" stroke-width="0.8"/>
+      <circle cx="480" cy="0" r="66"  fill="none" stroke="rgba(80,30,145,0.42)" stroke-width="0.85"/>
+      <circle cx="480" cy="0" r="88"  fill="none" stroke="rgba(98,36,168,0.52)" stroke-width="0.85"/>
+      <circle cx="480" cy="0" r="110" fill="none" stroke="#6b35c8" stroke-width="0.9" opacity="0.60"/>
+      <circle cx="480" cy="0" r="132" fill="none" stroke="#7c3aed" stroke-width="0.9" opacity="0.67"/>
+      <circle cx="480" cy="0" r="154" fill="none" stroke="#8b4cf6" stroke-width="0.9" opacity="0.72"/>
+      <circle cx="480" cy="0" r="176" fill="none" stroke="#9d5ff6" stroke-width="0.9" opacity="0.72"/>
+      <circle cx="480" cy="0" r="198" fill="none" stroke="#b062e8" stroke-width="0.9" opacity="0.68"/>
+      <circle cx="480" cy="0" r="220" fill="none" stroke="#c45bd5" stroke-width="0.9" opacity="0.64"/>
+      <circle cx="480" cy="0" r="242" fill="none" stroke="#d655be" stroke-width="0.9" opacity="0.60"/>
+      <circle cx="480" cy="0" r="264" fill="none" stroke="#e24da5" stroke-width="0.9" opacity="0.55"/>
+      <circle cx="480" cy="0" r="286" fill="none" stroke="#e8498a" stroke-width="0.9" opacity="0.50"/>
+      <circle cx="480" cy="0" r="308" fill="none" stroke="#e54e70" stroke-width="0.9" opacity="0.43"/>
+      <circle cx="480" cy="0" r="330" fill="none" stroke="#e25550" stroke-width="0.9" opacity="0.36"/>
+      <circle cx="480" cy="0" r="352" fill="none" stroke="#df6038" stroke-width="0.9" opacity="0.28"/>
+      <circle cx="480" cy="0" r="374" fill="none" stroke="#e07028" stroke-width="0.9" opacity="0.20"/>
+      <circle cx="480" cy="0" r="396" fill="none" stroke="#e88018" stroke-width="0.9" opacity="0.13"/>
+      <circle cx="480" cy="0" r="418" fill="none" stroke="#f09010" stroke-width="0.9" opacity="0.07"/>
+      <circle cx="480" cy="0" r="440" fill="none" stroke="#f59510" stroke-width="0.9" opacity="0.03"/>
+    </svg>
+
+    <!-- Warm rings — bottom-left, echoing the sunny left side of the illustration -->
+    <svg class="banding-rings banding-rings--warm" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="0" cy="400" r="22"  fill="none" stroke="rgba(255,190,30,0.20)"  stroke-width="0.8"/>
+      <circle cx="0" cy="400" r="44"  fill="none" stroke="rgba(249,140,22,0.30)"  stroke-width="0.8"/>
+      <circle cx="0" cy="400" r="66"  fill="none" stroke="rgba(245,110,20,0.40)"  stroke-width="0.85"/>
+      <circle cx="0" cy="400" r="88"  fill="none" stroke="#f97316" stroke-width="0.85" opacity="0.48"/>
+      <circle cx="0" cy="400" r="110" fill="none" stroke="#f97316" stroke-width="0.9"  opacity="0.54"/>
+      <circle cx="0" cy="400" r="132" fill="none" stroke="#e8498a" stroke-width="0.9"  opacity="0.50"/>
+      <circle cx="0" cy="400" r="154" fill="none" stroke="#e8498a" stroke-width="0.9"  opacity="0.44"/>
+      <circle cx="0" cy="400" r="176" fill="none" stroke="#d655be" stroke-width="0.9"  opacity="0.36"/>
+      <circle cx="0" cy="400" r="198" fill="none" stroke="#a259f7" stroke-width="0.9"  opacity="0.26"/>
+      <circle cx="0" cy="400" r="220" fill="none" stroke="#7c3aed" stroke-width="0.9"  opacity="0.16"/>
+      <circle cx="0" cy="400" r="242" fill="none" stroke="#6b35c8" stroke-width="0.8"  opacity="0.08"/>
+      <circle cx="0" cy="400" r="264" fill="none" stroke="#5b5ef4" stroke-width="0.8"  opacity="0.04"/>
+    </svg>
+
+    <!-- Title lives in the sky area at the top — above the people -->
+    <div class="hero-title-wrap">
+      <h1 class="hero-title" data-text="LAYERED" aria-label="Layered">LAYERED</h1>
     </div>
+
+    <!-- CTA group at the bottom over the dark dissolve -->
+    <div class="hero-bottom">
+      <p class="hero-tagline">dress like you know what you're doing</p>
+      <button class="hero-cta" onclick="scrollToApp()">
+        <span>get started</span>
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M8 3v10M3 8l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
     <div class="hero-scroll-hint" aria-hidden="true">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
         <path d="M12 5v14M5 12l7 7 7-7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -39,6 +82,32 @@
 
   <!-- ========== APP ========== -->
   <main id="app">
+    <!-- App rings — top-right, continues the cool bloom from the hero -->
+    <svg class="banding-rings banding-rings--app" viewBox="0 0 420 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="420" cy="0" r="22"  fill="none" stroke="rgba(40,18,80,0.14)"  stroke-width="0.75"/>
+      <circle cx="420" cy="0" r="48"  fill="none" stroke="rgba(72,28,132,0.22)" stroke-width="0.75"/>
+      <circle cx="420" cy="0" r="74"  fill="none" stroke="#7c3aed" stroke-width="0.8" opacity="0.28"/>
+      <circle cx="420" cy="0" r="100" fill="none" stroke="#8b4cf6" stroke-width="0.8" opacity="0.32"/>
+      <circle cx="420" cy="0" r="126" fill="none" stroke="#b062e8" stroke-width="0.8" opacity="0.30"/>
+      <circle cx="420" cy="0" r="152" fill="none" stroke="#c45bd5" stroke-width="0.8" opacity="0.28"/>
+      <circle cx="420" cy="0" r="178" fill="none" stroke="#e24da5" stroke-width="0.8" opacity="0.25"/>
+      <circle cx="420" cy="0" r="204" fill="none" stroke="#e8498a" stroke-width="0.8" opacity="0.22"/>
+      <circle cx="420" cy="0" r="230" fill="none" stroke="#e54e70" stroke-width="0.8" opacity="0.18"/>
+      <circle cx="420" cy="0" r="256" fill="none" stroke="#e07028" stroke-width="0.8" opacity="0.13"/>
+      <circle cx="420" cy="0" r="282" fill="none" stroke="#f09010" stroke-width="0.7" opacity="0.08"/>
+      <circle cx="420" cy="0" r="308" fill="none" stroke="#f59510" stroke-width="0.7" opacity="0.04"/>
+    </svg>
+
+    <!-- Secondary warm rings — bottom-left of app, echoing hero warm side -->
+    <svg class="banding-rings banding-rings--app-warm" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="0" cy="320" r="28"  fill="none" stroke="rgba(249,115,22,0.16)" stroke-width="0.75"/>
+      <circle cx="0" cy="320" r="56"  fill="none" stroke="#f97316" stroke-width="0.75" opacity="0.20"/>
+      <circle cx="0" cy="320" r="84"  fill="none" stroke="#e8498a" stroke-width="0.75" opacity="0.18"/>
+      <circle cx="0" cy="320" r="112" fill="none" stroke="#d655be" stroke-width="0.75" opacity="0.14"/>
+      <circle cx="0" cy="320" r="140" fill="none" stroke="#a259f7" stroke-width="0.75" opacity="0.10"/>
+      <circle cx="0" cy="320" r="168" fill="none" stroke="#7c3aed" stroke-width="0.75" opacity="0.06"/>
+      <circle cx="0" cy="320" r="196" fill="none" stroke="#5b5ef4" stroke-width="0.75" opacity="0.03"/>
+    </svg>
 
     <!-- User Selection -->
     <section id="user-select-section">
