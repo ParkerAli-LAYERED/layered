@@ -426,7 +426,7 @@ Give a specific outfit recommendation using their vocabulary. Reference the phot
     userContent.push({ type: 'text', text: userPrompt });
 
     const claudeResponse = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 350,
       system: systemPrompt,
       messages: [{ role: 'user', content: userContent }]
