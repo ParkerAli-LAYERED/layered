@@ -550,7 +550,12 @@ function showRecActivityStep() {
   const step = document.getElementById('rec-activity-step');
   step.hidden = false;
   step.classList.add('step-enter');
-  setTimeout(() => step.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+  setTimeout(() => {
+    const btn = document.getElementById('get-rec-btn');
+    const rect = btn.getBoundingClientRect();
+    const targetY = window.scrollY + rect.bottom - window.innerHeight + 48;
+    window.scrollTo({ top: targetY, behavior: 'smooth' });
+  }, 150);
 }
 
 function onWeatherConfirmed() {
@@ -726,8 +731,10 @@ async function fetchRecommendation() {
       })
     });
 
-    if (!res.ok) throw new Error('Recommendation request failed');
     const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Recommendation request failed');
+    }
 
     document.getElementById('rec-generating').hidden = true;
     document.getElementById('rec-result').hidden = false;
@@ -743,7 +750,7 @@ async function fetchRecommendation() {
     document.getElementById('rec-generating').hidden = true;
     document.getElementById('rec-result').hidden = false;
     document.getElementById('rec-cold-start').hidden = false;
-    document.getElementById('cold-start-msg').textContent = 'Something went wrong on our end. Try again in a sec.';
+    document.getElementById('cold-start-msg').textContent = err.message || 'Something went wrong on our end. Try again in a sec.';
     document.getElementById('rec-card').hidden = true;
   }
 }

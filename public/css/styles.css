@@ -189,7 +189,7 @@ img {
 /* ── LAYERED wordmark — concentric rings projected through the letterforms ── */
 .hero-title {
   font-family: var(--font-wordmark);
-  font-size: clamp(68px, 18vw, 104px);
+  font-size: clamp(48px, 12.5vw, 72px);
   line-height: 0.88;
   letter-spacing: 0.18em;
   user-select: none;
@@ -234,34 +234,34 @@ img {
 /* ── Display tagline — main hero statement below wordmark ── */
 .hero-display {
   font-family: var(--font-display);
-  font-size: clamp(20px, 5.2vw, 28px);
+  font-size: clamp(14px, 3.6vw, 20px);
   font-weight: 700;
   line-height: 1.15;
   color: rgba(255,255,255,0.82);
   letter-spacing: -0.01em;
-  margin-top: 20px;
-  margin-bottom: 40px;
+  margin-top: 14px;
+  margin-bottom: 28px;
 }
 
 /* ── CTA — gradient fill, matches wordmark ── */
 .hero-cta {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   background: var(--logo-gradient);
   color: #fff;
   font-family: var(--font-display);
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.06em;
-  padding: 16px 36px;
+  padding: 12px 26px;
   border: none;
   border-radius: 40px;
   transition: opacity 0.18s, transform 0.14s;
   touch-action: manipulation;
-  min-height: 52px;
+  min-height: 44px;
   white-space: nowrap;
-  box-shadow: 0 4px 28px rgba(232,73,138,0.28), 0 2px 8px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 20px rgba(232,73,138,0.24), 0 2px 8px rgba(0,0,0,0.4);
 }
 
 .hero-cta:hover  { opacity: 0.88; }
