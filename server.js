@@ -96,7 +96,14 @@ function scoreSubmission(sub, currentTemp, currentSeason, activityType) {
   const tempScore = Math.max(0, 60 - tempDiff * 6);
   const seasonScore = sub.season === currentSeason ? 25 : 0;
   const activityScore = activityType && sub.activity_type === activityType ? 15 : 0;
-  return { ...sub, _score: tempScore + seasonScore + activityScore, _tempDiff: tempDiff };
+
+  // Rating bonus: prefer well-calibrated outfits as reference points.
+  // A "nailed it" (0) is ground truth — strongly prefer it over a bad rating at similar temp.
+  // Mild misses (±1) get a small boost over extreme misses (±2).
+  const ratingAbs = Math.abs(sub.outfit_rating_numeric ?? 0);
+  const ratingBonus = ratingAbs === 0 ? 20 : ratingAbs === 1 ? 5 : -10;
+
+  return { ...sub, _score: tempScore + seasonScore + activityScore + ratingBonus, _tempDiff: tempDiff };
 }
 
 function findBestMatch(submissions, currentTemp, currentSeason, activityType) {
@@ -322,12 +329,21 @@ app.post('/api/recommend', async (req, res) => {
   try {
     const {
       user_name,
-      current_temp,
       current_condition,
       current_season,
       location_label,
       activity_type
     } = req.body;
+
+    // Explicitly parse to float so string values from JSON don't silently break scoring
+    const current_temp = parseFloat(req.body.current_temp);
+
+    console.log(`[recommend] user=${user_name} temp=${current_temp} season=${current_season} activity=${activity_type || 'none'}`);
+
+    if (isNaN(current_temp)) {
+      console.error('[recommend] current_temp is NaN — raw value:', req.body.current_temp);
+      return res.status(400).json({ error: 'Invalid temperature received. Try refreshing the weather.' });
+    }
 
     // Fetch all submissions for this user
     const { data: submissions, error: subError } = await supabase
@@ -339,6 +355,7 @@ app.post('/api/recommend', async (req, res) => {
     if (subError) throw subError;
 
     const count = submissions?.length || 0;
+    console.log(`[recommend] found ${count} submissions for ${user_name}`);
 
     // Cold start: fewer than 4 submissions
     if (count < 4) {
@@ -354,6 +371,18 @@ app.post('/api/recommend', async (req, res) => {
     }
 
     const { match, activityMatched } = result;
+
+    // Log top candidates so you can see what's being scored in the terminal
+    const debugScored = submissions
+      .map(s => scoreSubmission(s, current_temp, current_season, activity_type))
+      .sort((a, b) => b._score - a._score)
+      .slice(0, 5);
+    console.log('[recommend] top matches:');
+    debugScored.forEach((s, i) => {
+      const d = new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      console.log(`  ${i + 1}. ${d} | ${s.temp_f}°F | score=${s._score} | tempDiff=${s._tempDiff.toFixed(1)} | photo=${s.photo_url ? 'yes' : 'NO'}`);
+    });
+    console.log(`[recommend] selected: ${new Date(match.created_at).toLocaleDateString()} | ${match.temp_f}°F | activityMatched=${activityMatched}`);
 
     // If best match is very far in temperature and data is sparse, do soft cold start
     if (match._tempDiff > 18 && count < 8) {
@@ -377,15 +406,21 @@ app.post('/api/recommend', async (req, res) => {
     let imageBase64 = null;
     let imageMediaType = 'image/jpeg';
     if (match.photo_url) {
+      console.log(`[recommend] fetching photo for Claude: ${match.photo_url.slice(0, 80)}...`);
       try {
         const imgRes = await fetch(match.photo_url);
         if (imgRes.ok) {
           imageBase64 = Buffer.from(await imgRes.arrayBuffer()).toString('base64');
           imageMediaType = (imgRes.headers.get('content-type') || 'image/jpeg').split(';')[0];
+          console.log(`[recommend] photo fetched OK (${imageMediaType})`);
+        } else {
+          console.error(`[recommend] photo fetch returned ${imgRes.status} for ${match.photo_url}`);
         }
       } catch (e) {
-        console.error('Photo fetch for Claude failed:', e);
+        console.error('[recommend] photo fetch for Claude failed:', e.message);
       }
+    } else {
+      console.warn('[recommend] matched submission has no photo_url — Claude will advise without image');
     }
 
     const matchDate = new Date(match.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -398,7 +433,7 @@ app.post('/api/recommend', async (req, res) => {
       ? `they were underdressed (${match.outfit_rating_label}), so lean warmer today`
       : match.outfit_rating_numeric > 0
       ? `they were overdressed (${match.outfit_rating_label}), so consider going lighter`
-      : `that outfit was perfectly calibrated`;
+      : `that outfit was perfectly calibrated — this is the reference, recommend it directly (adjusted only for the temp difference if needed)`;
 
     const systemPrompt = `You are Layered's outfit advisor. You're sharp, funny, and warm — think Amy Poehler meets a fashion-forward meteorologist. You speak directly to the user, reference their past outfits using their own words, and give specific, actionable advice. Never vague. Never corporate. Under 140 words. Conversational, a little dramatic when the weather earns it, never boring.`;
 

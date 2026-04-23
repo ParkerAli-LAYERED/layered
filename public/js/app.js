@@ -480,7 +480,7 @@ function displayWeather(data) {
   const feels = data.apparent_f;
   const condition = data.condition || 'unknown';
   const location = data.locationLabel;
-  const wind = data.wind_mph;
+  const wind = data.windspeed;
 
   document.getElementById('weather-location-display').textContent = buildLocationLine(location);
   document.getElementById('weather-temp-display').textContent = `${temp}°F`;
@@ -829,7 +829,9 @@ function showStep(stepId) {
   void step.offsetWidth; // Trigger reflow for animation
   step.classList.add('step-enter');
   setTimeout(() => {
-    step.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const rect = step.getBoundingClientRect();
+    const targetY = window.scrollY + rect.top - 20;
+    window.scrollTo({ top: targetY, behavior: 'smooth' });
   }, 100);
 }
 
